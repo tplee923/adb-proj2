@@ -5,14 +5,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Scanner;
-import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -29,6 +22,7 @@ public class QProber {
 	private static String[] keywordsArray = {"avi","file"};
 	private static String outputStr;
 	private static String database="diabetes.org";
+	private static ArrayList<Category> finalResult = new ArrayList<Category>();
 	/**
 	 * @param keywordsArray
 	 * @return	the search URL
@@ -107,24 +101,17 @@ public class QProber {
 			// System.out.println(resultstring);
 			return resultstring;
 		} catch (MalformedURLException e) {
-			e.printStackTrace();
-		} catch (IOException e1) {
-			e1.printStackTrace();
-		}
+			//e.printStackTrace();
+		} catch (IOException e) {
+			//e.printStackTrace();
+		} 
 		return "";
 	}
 	
-	/**
-	 * @param prompt
-	 * @return	user's input
-	 */
-	private static String readUserInput(String prompt) {
-		Scanner scanner = new Scanner(System.in);
-		System.out.print(prompt);
-		return scanner.nextLine();
-	}
-	
+
 	public static int getCoverage(String xmlResult) throws ParserConfigurationException, SAXException, IOException{
+		int coverage = -1;
+		try{
 		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder builder = factory.newDocumentBuilder();
 		InputSource inStream = new org.xml.sax.InputSource();
@@ -133,12 +120,15 @@ public class QProber {
 		NodeList nodeList = doc.getElementsByTagName("resultset_web");
 //		/Node node = doc.getElementsByTagName("resultset_web");
 		Node node = nodeList.item(0);	//totalhits tag only have one element
-		int coverage = -1;
+		//int coverage = -1;
 		
 		if (node.getNodeType() == Node.ELEMENT_NODE) {
 			Element element = (Element)node;
 			coverage  = Integer.parseInt(element.getAttribute("totalhits").trim());
 		}	
+		}catch(Exception e){
+			e.printStackTrace();
+		}
 		return coverage;
 	}
 
@@ -150,7 +140,7 @@ public class QProber {
 		try {
 			for (String query : C.getQueries()) {
 				String searchURL = formURL(D,query);
-				System.out.println(searchURL);
+				//System.out.println(searchURL);
 				String xmlResult = search(searchURL);
 				System.out.println(xmlResult);
 				cov += getCoverage(xmlResult);
@@ -190,7 +180,7 @@ public class QProber {
 	}
 	
 	public static ArrayList<Category> Classify(Category C, String D, int tec, double tes, double es) {
-		ArrayList<Category> Result = new ArrayList<Category>();
+		//ArrayList<Category> Result = new ArrayList<Category>();
 		if (C.getisLeaf()) {
 			ArrayList<Category> set = new ArrayList<Category>();
 			set.add(C);
@@ -198,18 +188,21 @@ public class QProber {
 		}
 			
 		for (Category Ci : C.getSubcat()) {
-			if (ESpecificity(D,Ci) >= tes && ECoverage(D,Ci) >= tec) {
-				//Result.addAll(Classify(Ci,D,tec,tes,ESpecificity(D,Ci)));
+			int coverage = ECoverage(D,Ci);
+			double specificity = ESpecificity(D,Ci);
+			System.out.println("Category:"+Ci.getName()+",Converage:"+coverage+",Specificity:"+specificity);
+			if (specificity >= tes && coverage >= tec) {
+				finalResult.addAll(Classify(Ci,D,tec,tes,specificity));
 			}
 		}
 		
-		if (Result.isEmpty()) {
+		if (finalResult.isEmpty()) {
 			ArrayList<Category> set = new ArrayList<Category>();
 			set.add(C);
 			return set;
 		}
 		else {
-			return Result;
+			return finalResult;
 		}
 	}
 	
@@ -219,10 +212,12 @@ public class QProber {
 		//	+ "avi%20file" + "?appid=" + yahooID + "&format=xml&sites=" + database;
 		//System.out.println("Final UR2: " + lll);
 		//String theResult = Search(testQuery);
-		
+		//finalResult.clear();
+		//finalResult.add(new Category("Root"));
 		Category rootcat = ProjectHelper.makeCategories();
-		ArrayList<Category> result = Classify(rootcat,"diabetes.org",100,0.5,1.0);
-		
+		ArrayList<Category> result = Classify(rootcat,"java.sun.com",100,0.6,1.0);
+		for(Category c: result)
+			System.out.println(c);
 		//System.out.println(cov);
 		
 	}
