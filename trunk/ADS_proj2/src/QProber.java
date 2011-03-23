@@ -55,6 +55,12 @@ public class QProber {
 		return urlString;
 	}
 	
+	public static String formURL(String D, String Query) {
+		String urlString =  "http://boss.yahooapis.com/ysearch/web/v1/"
+			+ Query + "?appid=" + yahooID + "&format=xml&sites=" + D;
+		return urlString;
+	}
+	
 	/**
 	 * @param keywordsArray
 	 * @return	the xml result in String format
@@ -83,11 +89,8 @@ public class QProber {
 		return "";
 	}*/
 	
-	public static void Search (String db) {
-		
-	}
 	
-	public static String Search(String urlt) {
+	public static String search(String urlt) {
 		String resultstring = "";
 		try {
 			URL url = new URL(urlt);
@@ -128,7 +131,7 @@ public class QProber {
 		inStream.setCharacterStream(new java.io.StringReader(xmlResult));
 		Document doc = builder.parse(inStream);
 		NodeList nodeList = doc.getElementsByTagName("resultset_web");
-		//Node node = doc.getElementsByTagName("resultset_web");
+//		/Node node = doc.getElementsByTagName("resultset_web");
 		Node node = nodeList.item(0);	//totalhits tag only have one element
 		int coverage = -1;
 		
@@ -142,10 +145,16 @@ public class QProber {
 	
 	
 	public static int ECoverage(String D, Category C) {
-		String s = Search(D);
-		int cov = -1;
+		int cov = 0;
+		
 		try {
-			cov = getCoverage(s);
+			for (String query : C.getQueries()) {
+				String searchURL = formURL(D,query);
+				System.out.println(searchURL);
+				String xmlResult = search(searchURL);
+				System.out.println(xmlResult);
+				cov += getCoverage(xmlResult);
+			}		
 		} 
 		catch (ParserConfigurationException e) {
 			e.printStackTrace();
@@ -167,7 +176,7 @@ public class QProber {
 		}
 		else {
 			numerator = ESpecificity(D,Ci.getParent()) * ECoverage(D,Ci);
-			for (Category Cj : Ci.getSubcat()) {
+			for (Category Cj : Ci.getParent().getSubcat()) {
 				denominator += ECoverage(D,Cj);
 			}
 			if (denominator != 0)
@@ -190,7 +199,7 @@ public class QProber {
 			
 		for (Category Ci : C.getSubcat()) {
 			if (ESpecificity(D,Ci) >= tes && ECoverage(D,Ci) >= tec) {
-				Result.addAll(Classify(Ci,D,tec,tes,ESpecificity(D,Ci)));
+				//Result.addAll(Classify(Ci,D,tec,tes,ESpecificity(D,Ci)));
 			}
 		}
 		
@@ -206,41 +215,16 @@ public class QProber {
 	
 	
 	public static void main(String[] args) {
-		String testQuery = "http://boss.yahooapis.com/ysearch/web/v1/"
-			+ "avi%20file" + "?appid=" + yahooID + "&format=xml&sites=" + database;
+		//String testQuery = "http://boss.yahooapis.com/ysearch/web/v1/"
+		//	+ "avi%20file" + "?appid=" + yahooID + "&format=xml&sites=" + database;
 		//System.out.println("Final UR2: " + lll);
-		String theResult = Search(testQuery);
+		//String theResult = Search(testQuery);
 		
 		Category rootcat = ProjectHelper.makeCategories();
-		makeCategories(rootcat);
+		ArrayList<Category> result = Classify(rootcat,"diabetes.org",100,0.5,1.0);
 		
+		//System.out.println(cov);
 		
-		int cov = -1;
-		try {
-			cov = getCoverage(theResult);
-		} 
-		catch (ParserConfigurationException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} 
-		catch (SAXException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} 
-		catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		//System.out.println(theResult);
-		//System.out.println(theResult2);
-		
-		System.out.println(cov);
-		
-		FileUtil fu = new FileUtil();
-		fu.makeQueries("root.txt", "rootLeft.txt", "rootRight.txt");
-		fu.makeQueries("sports.txt", "sportsLeft.txt", "sportsRight.txt");
-		fu.makeQueries("health.txt", "healthLeft.txt", "healthRight.txt");
-		fu.makeQueries("computers.txt", "computersLeft.txt", "computersRight.txt");
 	}
 	
 }
