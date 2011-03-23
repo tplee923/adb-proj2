@@ -17,6 +17,7 @@ public class AddRefChar {
 				writer.write(string);
 				writer.newLine();
 				
+				
 			}
 			writer.close();
 			reader.close();
