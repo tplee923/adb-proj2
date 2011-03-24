@@ -7,6 +7,8 @@ public class Category {
 	private ArrayList<Category> subcat;	//	the subcategories of this category
 	private String [] queries;
 	private Category parent;
+	private ArrayList<String> topurls;// store the top 4 hits' URL
+	
 	
 	public Category(String name){
 		this.name = name;
@@ -55,9 +57,19 @@ public class Category {
 		this.parent = parent;
 	}
 	
+	public ArrayList<String> getTopURLs() {
+		return topurls;
+	}
+	
+	public void setTopURLs(ArrayList<String> topurls) {
+		this.topurls = topurls;
+	}
+	
 	public String toString() {
 		return this.getName();
 	}
+	
+	
 	
 }
 
