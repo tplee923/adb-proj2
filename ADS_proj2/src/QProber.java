@@ -19,7 +19,6 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 public class QProber {
 	private static String yahooID = "B8JQDzTV34FHmHMnQcwcEPiucXt.SFviHkJ6w.KxXhr37KFMJtaoV6D79K8Qlw--";
-	private static String[] keywordsArray = {"avi","file"};
 	private static String outputStr;
 	private static String database="diabetes.org";
 	private static ArrayList<Category> finalResult = new ArrayList<Category>();
@@ -105,7 +104,7 @@ public class QProber {
 		} catch (IOException e) {
 			//e.printStackTrace();
 		} 
-		return "";
+		return "NA";
 	}
 	
 
@@ -142,8 +141,10 @@ public class QProber {
 				String searchURL = formURL(D,query);
 				//System.out.println(searchURL);
 				String xmlResult = search(searchURL);
-				System.out.println(xmlResult);
-				cov += getCoverage(xmlResult);
+				//System.out.println(xmlResult);
+				if(!xmlResult.equals("NA") ){
+					cov += getCoverage(xmlResult);
+				}
 			}		
 		} 
 		catch (ParserConfigurationException e) {
@@ -194,7 +195,12 @@ public class QProber {
 			double specificity = ESpecificity(D,Ci,coverage);
 			System.out.println("Category:"+Ci.getName()+",Converage:"+coverage+",Specificity:"+specificity);
 			if (specificity >= tes && coverage >= tec) {
-				finalResult.addAll(Classify(Ci,D,tec,tes,specificity));
+				ArrayList<Category> newList = Classify(Ci,D,tec,tes,specificity);
+				for(Category c : newList){
+					System.out.print("!!!"+c);
+				}
+				System.out.println("!!!");
+				finalResult.addAll(newList);
 			}
 		}
 		
@@ -213,9 +219,6 @@ public class QProber {
 		//String testQuery = "http://boss.yahooapis.com/ysearch/web/v1/"
 		//	+ "avi%20file" + "?appid=" + yahooID + "&format=xml&sites=" + database;
 		//System.out.println("Final UR2: " + lll);
-		//String theResult = Search(testQuery);
-		//finalResult.clear();
-		//finalResult.add(new Category("Root"));
 		Category rootcat = ProjectHelper.makeCategories();
 		ArrayList<Category> result = Classify(rootcat,"tomshardware.com",100,0.6,1.0);
 		for(Category c: result)
