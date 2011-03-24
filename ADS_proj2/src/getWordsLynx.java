@@ -13,7 +13,8 @@ public class getWordsLynx {
 
         try {
         	
-            String cmdline[] = {"/usr/local/bin/lynx", "--dump", url };
+            //String cmdline[] = {"/usr/local/bin/lynx", "--dump", url };
+        	String cmdline[] = {"lynx", "--dump", url };
             Process p = Runtime.getRuntime().exec(cmdline);
             BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));
             BufferedReader stdError = new BufferedReader(new InputStreamReader(p.getErrorStream()));
@@ -67,7 +68,7 @@ public class getWordsLynx {
                 }
             }
         }
-        Set document = new TreeSet();
+        Set<String> document = new TreeSet<String>();
         StringTokenizer st = new StringTokenizer(output.toString());
 
         while (st.hasMoreTokens()) {
@@ -78,7 +79,7 @@ public class getWordsLynx {
         return document;
     }
 
-    public static void main(String args[]) {
-        runLynx(args[0]);
-    }
+    //public static void main(String args[]) {
+    //    runLynx(args[0]);
+    //}
 }
