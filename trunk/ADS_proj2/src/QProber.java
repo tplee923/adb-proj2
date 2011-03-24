@@ -158,16 +158,18 @@ public class QProber {
 		return cov;
 	}
 	
-	public static double ESpecificity(String D, Category Ci) {
+	public static double ESpecificity(String D, Category Ci, int Cov) {
 		double numerator = 0;
 		double denominator = 0;
 		if (Ci.getParent() == null) {
 			return 1.0;
 		}
 		else {
-			numerator = ESpecificity(D,Ci.getParent()) * ECoverage(D,Ci);
+			numerator = ESpecificity(D,Ci.getParent(),0) * Cov;
+			denominator = Cov;
 			for (Category Cj : Ci.getParent().getSubcat()) {
-				denominator += ECoverage(D,Cj);
+				if (!(Cj.getName().equals(Ci.getName())))
+					denominator += ECoverage(D,Cj);
 			}
 			if (denominator != 0)
 				return numerator/denominator;
@@ -189,7 +191,7 @@ public class QProber {
 			
 		for (Category Ci : C.getSubcat()) {
 			int coverage = ECoverage(D,Ci);
-			double specificity = ESpecificity(D,Ci);
+			double specificity = ESpecificity(D,Ci,coverage);
 			System.out.println("Category:"+Ci.getName()+",Converage:"+coverage+",Specificity:"+specificity);
 			if (specificity >= tes && coverage >= tec) {
 				finalResult.addAll(Classify(Ci,D,tec,tes,specificity));
@@ -215,7 +217,7 @@ public class QProber {
 		//finalResult.clear();
 		//finalResult.add(new Category("Root"));
 		Category rootcat = ProjectHelper.makeCategories();
-		ArrayList<Category> result = Classify(rootcat,"java.sun.com",100,0.6,1.0);
+		ArrayList<Category> result = Classify(rootcat,"diabetes.org",100,0.6,1.0);
 		for(Category c: result)
 			System.out.println(c);
 		//System.out.println(cov);
