@@ -252,7 +252,7 @@ public class QProber {
 		}
 	}
 	
-	public static void docSampling(String db, ArrayList<Category> result) {
+	public static boolean docSampling(String db, ArrayList<Category> result) {
 		Category c = result.get(0);
 		HashMap<String, Integer> doc = new HashMap<String, Integer>();
 		Set<String> temp = new TreeSet<String>();
@@ -276,11 +276,15 @@ public class QProber {
 	public static void main(String[] args) {
 		//String testQuery = "http://boss.yahooapis.com/ysearch/web/v1/"
 		//	+ "avi%20file" + "?appid=" + yahooID + "&format=xml&sites=" + database;
-		
+		String db = "hardwarecentral.com";
 		Category rootcat = ProjectHelper.makeCategories();
 		coverageCache = 0;
-		ArrayList<Category> result = Classify(rootcat,"hardwarecentral.com",100,0.6,1.0);
-		
+		ArrayList<Category> result = Classify(rootcat,db,100,0.6,1.0);
+		if (!docSampling(db,result)) {
+			System.out.println("Making summary Success!");
+		}
+		else
+			System.out.println("Making summary Error");
 		//for(Category c: result)
 		//	System.out.println(c);
 		
