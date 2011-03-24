@@ -217,7 +217,7 @@ public class QProber {
 		//finalResult.clear();
 		//finalResult.add(new Category("Root"));
 		Category rootcat = ProjectHelper.makeCategories();
-		ArrayList<Category> result = Classify(rootcat,"diabetes.org",100,0.6,1.0);
+		ArrayList<Category> result = Classify(rootcat,"tomshardware.com",100,0.6,1.0);
 		for(Category c: result)
 			System.out.println(c);
 		//System.out.println(cov);
