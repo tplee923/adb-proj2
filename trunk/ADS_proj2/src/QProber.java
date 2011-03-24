@@ -270,6 +270,7 @@ public class QProber {
 			}
 			c = c.getParent();
 		}
+		return true;
 		//now doc waits to be written to harddrive...
 	}
 	
@@ -280,7 +281,7 @@ public class QProber {
 		Category rootcat = ProjectHelper.makeCategories();
 		coverageCache = 0;
 		ArrayList<Category> result = Classify(rootcat,db,100,0.6,1.0);
-		if (!docSampling(db,result)) {
+		if (docSampling(db,result)) {
 			System.out.println("Making summary Success!");
 		}
 		else
