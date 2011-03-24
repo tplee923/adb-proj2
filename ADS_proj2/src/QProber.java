@@ -21,7 +21,7 @@ public class QProber {
 	private static String yahooID = "B8JQDzTV34FHmHMnQcwcEPiucXt.SFviHkJ6w.KxXhr37KFMJtaoV6D79K8Qlw--";
 	private static String outputStr;
 	private static String database="diabetes.org";
-	
+	private static double coverageCache;
 	/**
 	 * @param keywordsArray
 	 * @return	the search URL
@@ -156,18 +156,19 @@ public class QProber {
 		catch (IOException e) {
 			e.printStackTrace();
 		}
+		coverageCache = cov;
 		return cov;
 	}
 	
-	public static double ESpecificity(String D, Category Ci) {
+	public static double ESpecificity(String D, Category Ci, double es) {
 		double numerator = 0;
 		double denominator = 0;
 		if (Ci.getParent() == null) {
 			return 1.0;
 		}
 		else {
-			numerator = ESpecificity(D,Ci.getParent()) * ECoverage(D,Ci);
-			denominator = 0;
+			numerator = es * coverageCache;
+			denominator = coverageCache;
 			for (Category Cj : Ci.getParent().getSubcat()) {
 				if (!(Cj.getName().equals(Ci.getName())))
 					denominator += ECoverage(D,Cj);
@@ -192,7 +193,7 @@ public class QProber {
 			
 		for (Category Ci : C.getSubcat()) {
 			int coverage = ECoverage(D,Ci);
-			double specificity = ESpecificity(D,Ci);
+			double specificity = ESpecificity(D,Ci,es);
 			System.out.println("Category:"+Ci.getName()+",Converage:"+coverage+",Specificity:"+specificity);
 			if (specificity >= tes && coverage >= tec) {
 				ArrayList<Category> newList = Classify(Ci,D,tec,tes,specificity);
@@ -214,13 +215,13 @@ public class QProber {
 		}
 	}
 	
-	
 	public static void main(String[] args) {
 		//String testQuery = "http://boss.yahooapis.com/ysearch/web/v1/"
 		//	+ "avi%20file" + "?appid=" + yahooID + "&format=xml&sites=" + database;
 		//System.out.println("Final UR2: " + lll);
 		Category rootcat = ProjectHelper.makeCategories();
-		ArrayList<Category> result = Classify(rootcat,"tomshardware.com",100,0.6,1.0);
+		coverageCache = 0;
+		ArrayList<Category> result = Classify(rootcat,"hardwarecentral.com",100,0.6,1.0);
 		for(Category c: result)
 			System.out.println(c);
 		//System.out.println(cov);
