@@ -55,5 +55,9 @@ public class Category {
 		this.parent = parent;
 	}
 	
+	public String toString() {
+		return this.getName();
+	}
+	
 }
 
