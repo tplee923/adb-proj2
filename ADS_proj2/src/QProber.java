@@ -21,7 +21,7 @@ public class QProber {
 	private static String yahooID = "B8JQDzTV34FHmHMnQcwcEPiucXt.SFviHkJ6w.KxXhr37KFMJtaoV6D79K8Qlw--";
 	private static String outputStr;
 	private static String database="diabetes.org";
-	private static ArrayList<Category> finalResult = new ArrayList<Category>();
+	
 	/**
 	 * @param keywordsArray
 	 * @return	the search URL
@@ -159,15 +159,15 @@ public class QProber {
 		return cov;
 	}
 	
-	public static double ESpecificity(String D, Category Ci, int Cov) {
+	public static double ESpecificity(String D, Category Ci) {
 		double numerator = 0;
 		double denominator = 0;
 		if (Ci.getParent() == null) {
 			return 1.0;
 		}
 		else {
-			numerator = ESpecificity(D,Ci.getParent(),0) * Cov;
-			denominator = Cov;
+			numerator = ESpecificity(D,Ci.getParent()) * ECoverage(D,Ci);
+			denominator = 0;
 			for (Category Cj : Ci.getParent().getSubcat()) {
 				if (!(Cj.getName().equals(Ci.getName())))
 					denominator += ECoverage(D,Cj);
@@ -183,7 +183,7 @@ public class QProber {
 	}
 	
 	public static ArrayList<Category> Classify(Category C, String D, int tec, double tes, double es) {
-		//ArrayList<Category> Result = new ArrayList<Category>();
+		ArrayList<Category> Result = new ArrayList<Category>();
 		if (C.getisLeaf()) {
 			ArrayList<Category> set = new ArrayList<Category>();
 			set.add(C);
@@ -192,25 +192,25 @@ public class QProber {
 			
 		for (Category Ci : C.getSubcat()) {
 			int coverage = ECoverage(D,Ci);
-			double specificity = ESpecificity(D,Ci,coverage);
+			double specificity = ESpecificity(D,Ci);
 			System.out.println("Category:"+Ci.getName()+",Converage:"+coverage+",Specificity:"+specificity);
 			if (specificity >= tes && coverage >= tec) {
 				ArrayList<Category> newList = Classify(Ci,D,tec,tes,specificity);
-				for(Category c : newList){
-					System.out.print("!!!"+c);
-				}
-				System.out.println("!!!");
-				finalResult.addAll(newList);
+				//for(Category c : newList){
+				//	System.out.print("!!!"+c);
+				//}
+				//System.out.println("!!!");
+				Result.addAll(newList);
 			}
 		}
 		
-		if (finalResult.isEmpty()) {
+		if (Result.isEmpty()) {
 			ArrayList<Category> set = new ArrayList<Category>();
 			set.add(C);
 			return set;
 		}
 		else {
-			return finalResult;
+			return Result;
 		}
 	}
 	
