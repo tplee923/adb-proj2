@@ -7,12 +7,10 @@ public class Category {
 	private ArrayList<Category> subcat;	//	the subcategories of this category
 	private String [] queries;
 	private Category parent;
-	private ArrayList<String> topurls;// store the top 4 hits' URL
 	
 	
 	public Category(String name){
 		this.name = name;
-		//System.arraycopy(queries, 0, this.queries, 0, queries.length);
 	}
 	
 	public boolean getisLeaf(){
@@ -42,8 +40,6 @@ public class Category {
 	public void setQueries(String [] queries){
 		if (queries != null) {
 			int i = queries.length;
-			//System.out.println(this.name);
-			//System.out.println(i);
 			this.queries = new String[i];
 			System.arraycopy(queries, 0, this.queries, 0, queries.length);
 		}
@@ -57,19 +53,9 @@ public class Category {
 		this.parent = parent;
 	}
 	
-	public ArrayList<String> getTopURLs() {
-		return topurls;
-	}
-	
-	public void setTopURLs(ArrayList<String> topurls) {
-		this.topurls = topurls;
-	}
-	
 	public String toString() {
 		return this.getName();
 	}
-	
-	
 	
 }
 

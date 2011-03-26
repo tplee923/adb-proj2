@@ -29,6 +29,7 @@ public class getWordsLynx {
         } catch (Exception e) {
             System.out.println(e.getMessage());
             e.printStackTrace();
+            return null;
         }
         // Remove the References at the end of the dump
         int end = buffer.indexOf("\nReferences\n");
