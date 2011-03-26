@@ -1,13 +1,24 @@
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Hashtable;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 import javax.xml.parsers.DocumentBuilder;
@@ -23,68 +34,53 @@ import org.xml.sax.SAXException;
 
 public class QProber {
 	private static String yahooID = "B8JQDzTV34FHmHMnQcwcEPiucXt.SFviHkJ6w.KxXhr37KFMJtaoV6D79K8Qlw--";
-	private static String outputStr;
-	private static String database="java.sun.com";
 	private static double coverageCache;
+	private static File rootDir;
+	private static File urlsDir;
+	private static File hostDir;
+	private static Hashtable<String, String> ht = new Hashtable<String, String>();
+	private static Category rootcat = ProjectHelper.makeCategories();
+	private static boolean removeDuplicat = false;
+	
 	/**
-	 * @param keywordsArray
-	 * @return	the search URL
+	 * to judge whether the input is valid
 	 */
-	public static String formSearchURL(String[] keywordsArray) {
-		String finalStr = "";
-		outputStr = "";
-		for (int i = 0; i < keywordsArray.length; i++) {
-			outputStr = outputStr + " " + keywordsArray[i];
-			if (i == keywordsArray.length - 1) {
-				finalStr = finalStr + keywordsArray[i];
-			} else {
-				finalStr = finalStr + keywordsArray[i] + "%20";
-			}
+	public static boolean isInputValid(String[] array) {
+		int length = array.length;
+		if (length != 3 || !(isFractionValid(array[1])) || !(isInteger(array[2]))) {
+			System.out
+					.println("Input format error,the correct input format is\n<host> <t_es> <t_ec>.");
+			return false;
 		}
-		String urlString = "http://boss.yahooapis.com/ysearch/web/v1/"
-				+ finalStr + "?appid=" + yahooID + "&format=xml&sites=" + database;
-		System.out.println("Final URL: "+urlString);
-		//System.out.println("Parameters:\nClient key  =" + yahooID
-		//		+ "\nQuery       =" + outputStr + "\nPrecision   = "
-		//		+ strPrecisioin + "\nURL: " + urlString);
-		//System.out.println("Total number of results : 10\nYahoo! Search Results:\n"
-		//		+ "======================");
-		return urlString;
+		return true;
 	}
 	
-	public static String formURL(String D, String Query) {
+	/**
+	 * to judge whether the input is integer
+	 */
+	public static boolean isInteger(String s) {
+		try{
+			Integer.parseInt(s);
+			return true;
+		}catch(NumberFormatException e){
+		}
+		return false;
+	}
+	
+	/**
+	 * to judge whether the precision specified is valid
+	 */
+	public static boolean isFractionValid(String s) {
+		Pattern p = Pattern.compile("0+.\\d+");
+		Matcher m = p.matcher(s);
+		return m.matches();
+	}
+	
+	public static String formURL(String host, String query) {
 		String urlString =  "http://boss.yahooapis.com/ysearch/web/v1/"
-			+ Query + "?appid=" + yahooID + "&format=xml&sites=" + D;
+			+ query + "?appid=" + yahooID + "&format=xml&sites=" + host;
 		return urlString;
 	}
-	
-	/**
-	 * @param keywordsArray
-	 * @return	the xml result in String format
-	 */
-	/*public static String search(String[] keywordsArray) {
-		String resultstring = "";
-		try {
-			URL url = new URL(formSearchURL(keywordsArray));
-			URLConnection connection = url.openConnection();
-			connection.connect();
-			InputStreamReader in = new InputStreamReader(
-					connection.getInputStream());
-			BufferedReader br = new BufferedReader(in);
-			String s = br.readLine();
-			while (s != null) {
-				resultstring += s;
-				s = br.readLine();
-			}
-			// System.out.println(resultstring);
-			return resultstring;
-		} catch (MalformedURLException e) {
-			e.printStackTrace();
-		} catch (IOException e1) {
-			e1.printStackTrace();
-		}
-		return "";
-	}*/
 	
 	
 	public static String search(String urlt) {
@@ -104,9 +100,9 @@ public class QProber {
 			// System.out.println(resultstring);
 			return resultstring;
 		} catch (MalformedURLException e) {
-			//e.printStackTrace();
+			e.printStackTrace();
 		} catch (IOException e) {
-			//e.printStackTrace();
+			e.printStackTrace();
 		} 
 		return "NA";
 	}
@@ -121,7 +117,6 @@ public class QProber {
 		inStream.setCharacterStream(new java.io.StringReader(xmlResult));
 		Document doc = builder.parse(inStream);
 		NodeList nodeList = doc.getElementsByTagName("resultset_web");
-//		/Node node = doc.getElementsByTagName("resultset_web");
 		Node node = nodeList.item(0);	//totalhits tag only have one element
 		//int coverage = -1;
 		
@@ -135,77 +130,78 @@ public class QProber {
 		return coverage;
 	}
 
-	public static ArrayList<String> getTopFour(String xmlresult) throws SAXException, IOException, ParserConfigurationException {
-		ArrayList<String> top = new ArrayList<String>();
-		//String searchURL = formURL(db,query);
-		//String xmlresult = search(searchURL);
+	public static void cacheUrls(String xmlresult, String query, String host)
+			throws SAXException, IOException, ParserConfigurationException {
+		rootDir = new File("."+File.separator+"cache");
+		if(!rootDir.exists()){
+			rootDir.mkdirs();
+		}
+		urlsDir = new File(rootDir,"urls");
+		if(!urlsDir.exists()){
+			urlsDir.mkdirs();
+		}
+		hostDir = new File(urlsDir, host);
+		if(hostDir.exists()){
+		//	hostDir.delete();
+		}else{
+			hostDir.mkdir();
+		}
 		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder builder = factory.newDocumentBuilder();
 		InputSource inStream = new org.xml.sax.InputSource();
 		inStream.setCharacterStream(new java.io.StringReader(xmlresult));
-
 		Document doc = builder.parse(inStream);
-		NodeList nodeList = doc.getElementsByTagName("result");
-		int i=0;
-		for (int index = 0; i<4 && index < nodeList.getLength(); index++) {
-			String theurl = null;
-			Node node = nodeList.item(index);
-			if (node.getNodeType() == Node.ELEMENT_NODE) {
-				Element element = (Element) node;
-				NodeList nameNode = element.getElementsByTagName("url");
-				if (nameNode.item(0).getNodeType() == Node.ELEMENT_NODE) {
-					Element nameElement = (Element) nameNode.item(0);
-					theurl = nameElement.getFirstChild().getNodeValue().trim();
-					top.add(theurl);
-				}
-			}
-			i++;
+		NodeList list = doc.getElementsByTagName("url");
+		StringBuffer sb = new StringBuffer();
+		for (int i = 0; i < list.getLength(); i++) {
+			Element nameElement = (Element) list.item(i);
+			String theURL = nameElement.getFirstChild().getNodeValue().trim();
+			//System.out.println("URL: " + theURL);
+			sb.append(theURL+"\n");
 		}
-		return top;	//this variable may also contain less than 4 results
+		File queryFile = new File(hostDir, query);
+		FileWriter fw = new FileWriter(queryFile);
+	    fw.write(sb.toString());
+	    fw.flush();
+	    fw.close();
 	}
-	
-	public static int ECoverage(String D, Category C) {
+
+	public static int ECoverage(String host, Category cate) {
 		int cov = 0;
 		
 		try {
-			ArrayList<String> thetopurls = new ArrayList<String>();
-			for (String query : C.getQueries()) {
-				String searchURL = formURL(D,query);
+			for (String query : cate.getQueries()) {
+				String searchURL = formURL(host,query);
 				//System.out.println(searchURL);
 				String xmlresult = search(searchURL);
 				//System.out.println(xmlResult);
 				if(!xmlresult.equals("NA") ){
-					thetopurls.addAll(getTopFour(xmlresult));	//这里应该要避免重复文件
+					cacheUrls(xmlresult,query,host);
 					cov += getCoverage(xmlresult);
-				}			
+				}else{
+					System.out.println("Timeout when query "+query);
+				}
 			}
-			C.setTopURLs(thetopurls);
 		} 
-		catch (ParserConfigurationException e) {
+		catch (Exception e) {
 			e.printStackTrace();
 		} 
-		catch (SAXException e) {
-			e.printStackTrace();
-		} 
-		catch (IOException e) {
-			e.printStackTrace();
-		}
 		coverageCache = cov;
 		return cov;
 	}
 	
-	public static double ESpecificity(String D, Category Ci, double es) {
+	public static double ESpecificity(String host, Category cate, double es) {
 		double numerator = 0;
 		double denominator = 0;
-		if (Ci.getParent() == null) {
+		if (cate.getParent() == null) {
 			return 1.0;
 		}
 		else {
 			numerator = es * coverageCache;
 			denominator = coverageCache;
-			for (Category Cj : Ci.getParent().getSubcat()) {
-				if (!(Cj.getName().equals(Ci.getName())))
-					denominator += ECoverage(D,Cj);
+			for (Category Cj : cate.getParent().getSubcat()) {
+				if (!(Cj.getName().equals(cate.getName())))
+					denominator += ECoverage(host,Cj);
 			}
 			if (denominator != 0)
 				return numerator/denominator;
@@ -219,32 +215,27 @@ public class QProber {
 	
 	
 	
-	public static ArrayList<Category> Classify(Category C, String D, int tec, double tes, double es) {
+	public static ArrayList<Category> Classify(Category cate, String host, int tec, double tes, double es) {
 		ArrayList<Category> Result = new ArrayList<Category>();
-		if (C.getisLeaf()) {
+		if (cate.getisLeaf()) {
 			ArrayList<Category> set = new ArrayList<Category>();
-			set.add(C);
+			set.add(cate);
 			return set;
 		}
 			
-		for (Category Ci : C.getSubcat()) {
-			int coverage = ECoverage(D,Ci);
-			double specificity = ESpecificity(D,Ci,es);
-			//System.out.println("Category:"+Ci.getName()+",Converage:"+coverage+",Specificity:"+specificity);
+		for (Category Ci : cate.getSubcat()) {
+			int coverage = ECoverage(host,Ci);
+			double specificity = ESpecificity(host,Ci,es);
+			System.out.println("Category:"+Ci.getName()+"	Coverage:"+coverage+"	Specificity:"+specificity);
 			if (specificity >= tes && coverage >= tec) {
-				
-				ArrayList<Category> newList = Classify(Ci,D,tec,tes,specificity);
-				//for(Category c : newList){
-				//	System.out.print("!!!"+c);
-				//}
-				//System.out.println("!!!");
+				ArrayList<Category> newList = Classify(Ci,host,tec,tes,specificity);
 				Result.addAll(newList);
 			}
 		}
 		
 		if (Result.isEmpty()) {
 			ArrayList<Category> set = new ArrayList<Category>();
-			set.add(C);
+			set.add(cate);
 			return set;
 		}
 		else {
@@ -252,42 +243,144 @@ public class QProber {
 		}
 	}
 	
-	public static boolean docSampling(String db, ArrayList<Category> result) {
-		Category c = result.get(0);
+	public static HashMap<String, Integer> samplingCategory(String host, String[] array) {
+
 		HashMap<String, Integer> doc = new HashMap<String, Integer>();
-		Set<String> temp = new TreeSet<String>();
-		while (c != null) {
-			for (String url : c.getTopURLs()) {
-				temp = getWordsLynx.runLynx(url);//这里的警告不知道怎么解决。
+		for (int i = 0; i < array.length; i++) {
+			Set<String> temp = null;
+			File f = new File(hostDir, array[i]);
+			if (!f.exists()) {
+				System.out.println(array[i] + " is NOT cached!");
+			} else {
+				System.out.println("Getting page: " + array[i]);
+				int k = 4;
+				try {
+					FileReader reader = new FileReader(f);
+					BufferedReader br = new BufferedReader(reader);
+					String s1 = null;
+					while ((k != 0) && (s1 = br.readLine()) != null) {
+						if (!s1.equals("")) {
+							if (removeDuplicat && ht.containsKey(s1)) {
+								System.out.println(" Skipping "+s1);
+								continue;
+							}
+							System.out.println(s1);
+							temp = getWordsLynx.runLynx(s1);
+							if (temp != null && temp.size() != 0) {
+								ht.put(s1, "");
+								k--;
+							}
+						}
+					}
+					br.close();
+					reader.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+			if (temp != null && temp.size() != 0) {
 				for (String word : temp) {
 					if (doc.containsKey(word)) {
-						doc.put(word, doc.get(word)+1);
-					}
-					else {
+						doc.put(word, doc.get(word) + 1);
+					} else {
 						doc.put(word, 1);
 					}
-				}			
+				}
 			}
-			c = c.getParent();
+		System.out.println();
 		}
-		return true;
-		//now doc waits to be written to harddrive...
+		removeDuplicat = true;
+		return doc;
+	}
+	
+	public static void outputResult(String host, Category cat,
+			HashMap<String, Integer> map) {
+		String name = cat.getName() + "-" + host + ".txt";
+		File file = new File("./"+name);
+		FileWriter fw;
+		try {
+			fw = new FileWriter(file);
+			StringBuffer sb = new StringBuffer();
+			Object[] key = map.keySet().toArray();
+			Arrays.sort(key);
+			for (int i = 0; i < key.length; i++) {
+				sb.append(key[i]+"#"+map.get(key[i])+"\n");
+			}
+			fw.write(sb.toString());
+			fw.flush();
+			fw.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public static String[] mergeArrays(String[]a, String[]b){
+		int lengthA = a.length;
+		int lengthB = b.length;
+		String[] result=new String[lengthA+lengthB]; 
+		System.arraycopy(a,0,result,0,lengthA); 
+		System.arraycopy(b,0,result,lengthA,lengthB);
+		return result;
+	}
+	
+	public static void docSampling(String host, ArrayList<Category> node) {
+		Category c = node.get(0);
+		if(c.getisLeaf()){
+			c = c.getParent(); //if c is leaf node, we donot need to sample it
+		}
+		if(c.getParent()!=null){//meaning it's not root node
+			System.out.println("Sampling "+c);
+			ArrayList<Category> list = c.getSubcat();
+			String[] childArray1 = list.get(0).getQueries();
+			String[] childArray2 = list.get(1).getQueries();
+			String[] tmpArray = mergeArrays(childArray1, childArray2);
+			String[] selfArray = c.getQueries();
+			String[] finalSamplingArray = mergeArrays(tmpArray,selfArray);
+			HashMap<String, Integer> parentMap = samplingCategory(host, finalSamplingArray);
+			outputResult(host,c,parentMap);
+		}
+		//it's root node
+		System.out.println("Sampling Root");
+		ArrayList<Category> list = rootcat.getSubcat();
+		String[] childArray1 = list.get(0).getQueries();
+		String[] childArray2 = list.get(1).getQueries();
+		String[] childArray3 = list.get(2).getQueries();
+		String[] tmpArray = mergeArrays(childArray1, childArray2);
+		String[] finalSamplingArray = mergeArrays(tmpArray, childArray3);
+		HashMap<String, Integer> parentMap = samplingCategory(host, finalSamplingArray);
+		outputResult(host,rootcat,parentMap);
 	}
 	
 	public static void main(String[] args) {
-		//String testQuery = "http://boss.yahooapis.com/ysearch/web/v1/"
-		//	+ "avi%20file" + "?appid=" + yahooID + "&format=xml&sites=" + database;
-		String db = "hardwarecentral.com";
+		if (!(isInputValid(args))) {
+			return; // input error, simply return.
+		}
+		String host = args[0];
+		host=host.replaceAll("http://", ""); //if the input includes http://, we just remove it 
+		int t_es = new Integer(args[2]).intValue();
+		double t_ec = new Double(args[1]).doubleValue();
+		
 		Category rootcat = ProjectHelper.makeCategories();
 		coverageCache = 0;
-		ArrayList<Category> result = Classify(rootcat,db,100,0.6,1.0);
-		if (docSampling(db,result)) {
-			System.out.println("Making summary Success!");
+		System.out.println();
+		System.out.println("Classifying...");
+		ArrayList<Category> result = Classify(rootcat, host, t_es, t_ec, 1.0);
+		Category cat = result.get(0);
+		System.out.println("!!!cat is "+cat);
+		System.out.println("************************************");
+		System.out.print("The Category:");
+		StringBuffer sb = new StringBuffer();
+		while (cat.getParent()!=null){
+			sb.append(cat+" ");
+			cat = cat.getParent();
 		}
-		else
-			System.out.println("Making summary Error");
-		//for(Category c: result)
-		//	System.out.println(c);
-		
+		sb.append("Root");
+		String[] st = sb.toString().split(" ");
+		for(int i=st.length-1; i>=0; i--){
+			System.out.print(st[i]+"\\");
+		}
+		System.out.print("\n");
+		System.out.println("************************************");
+		docSampling(host,result);		
 	}
 }

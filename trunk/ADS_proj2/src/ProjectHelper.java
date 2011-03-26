@@ -4,7 +4,6 @@ import java.util.ArrayList;
 public class ProjectHelper {
 
 	public static Category makeCategories() {
-		//List<Category> leafCategories = new ArrayList<Category>();
 		Category Hardware = new Category("Hardware");
 		Hardware.setisLeaf(true);
 		Hardware.setQueries(new String [] {
@@ -227,7 +226,6 @@ public class ProjectHelper {
 		rootSub.add(Health);
 		rootSub.add(Sports);
 		Root.setSubcat(rootSub);
-		//root.setSubcat(subcat)
 		
 		Root.setParent(null);
 		Computers.setParent(Root);
