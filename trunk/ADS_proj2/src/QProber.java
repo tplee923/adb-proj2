@@ -43,6 +43,9 @@ public class QProber {
 	private static boolean removeDuplicat = false;
 	
 	/**
+	 * 
+	 * @param array
+	 * @return true if the input is valid, otherwise return false
 	 * to judge whether the input is valid
 	 */
 	public static boolean isInputValid(String[] array) {
@@ -56,6 +59,9 @@ public class QProber {
 	}
 	
 	/**
+	 * 
+	 * @param s
+	 * @return true if it is integer, otherwise return false
 	 * to judge whether the input is integer
 	 */
 	public static boolean isInteger(String s) {
@@ -68,6 +74,9 @@ public class QProber {
 	}
 	
 	/**
+	 * 
+	 * @param s
+	 * @return true if it is fraction, otherwise return false
 	 * to judge whether the precision specified is valid
 	 */
 	public static boolean isFractionValid(String s) {
@@ -76,13 +85,26 @@ public class QProber {
 		return m.matches();
 	}
 	
+	/**
+	 * 
+	 * @param host
+	 * @param query
+	 * @return url string
+	 * to form the url with host and query
+	 */
 	public static String formURL(String host, String query) {
 		String urlString =  "http://boss.yahooapis.com/ysearch/web/v1/"
 			+ query + "?appid=" + yahooID + "&format=xml&sites=" + host;
 		return urlString;
 	}
 	
-	
+	/**
+	 * 
+	 * @param urlt
+	 * @return url result
+	 * to return the result of this specified url, for our case, the 
+	 * format of result is xml
+	 */
 	public static String search(String urlt) {
 		String resultstring = "";
 		try {
@@ -97,7 +119,6 @@ public class QProber {
 				resultstring += s;
 				s = br.readLine();
 			}
-			// System.out.println(resultstring);
 			return resultstring;
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
@@ -107,7 +128,15 @@ public class QProber {
 		return "NA";
 	}
 	
-
+	/**
+	 * 
+	 * @param xmlResult
+	 * @return coverage number
+	 * @throws ParserConfigurationException
+	 * @throws SAXException
+	 * @throws IOException
+	 * to parse the result string and return the coverage number
+	 */
 	public static int getCoverage(String xmlResult) throws ParserConfigurationException, SAXException, IOException{
 		int coverage = -1;
 		try{
@@ -130,6 +159,16 @@ public class QProber {
 		return coverage;
 	}
 
+	/**
+	 * 
+	 * @param xmlresult
+	 * @param query
+	 * @param host
+	 * @throws SAXException
+	 * @throws IOException
+	 * @throws ParserConfigurationException
+	 * to cache the related urls
+	 */
 	public static void cacheUrls(String xmlresult, String query, String host)
 			throws SAXException, IOException, ParserConfigurationException {
 		rootDir = new File("."+File.separator+"cache");
@@ -166,6 +205,12 @@ public class QProber {
 	    fw.close();
 	}
 
+	/**
+	 * 
+	 * @param host
+	 * @param cate
+	 * @return coverage for the specified category
+	 */
 	public static int ECoverage(String host, Category cate) {
 		int cov = 0;
 		
@@ -190,6 +235,13 @@ public class QProber {
 		return cov;
 	}
 	
+	/**
+	 * 
+	 * @param host
+	 * @param cate
+	 * @param es
+	 * @return the specificity for the specified category
+	 */
 	public static double ESpecificity(String host, Category cate, double es) {
 		double numerator = 0;
 		double denominator = 0;
@@ -214,7 +266,15 @@ public class QProber {
 	}
 	
 	
-	
+	/**
+	 * 
+	 * @param cate
+	 * @param host
+	 * @param tec
+	 * @param tes
+	 * @param es
+	 * @return the category for the host
+	 */
 	public static ArrayList<Category> Classify(Category cate, String host, int tec, double tes, double es) {
 		ArrayList<Category> Result = new ArrayList<Category>();
 		if (cate.getisLeaf()) {
@@ -243,6 +303,12 @@ public class QProber {
 		}
 	}
 	
+	/**
+	 * 
+	 * @param host
+	 * @param array
+	 * @return the hashmap for the specified host and array
+	 */
 	public static HashMap<String, Integer> samplingCategory(String host, String[] array) {
 
 		HashMap<String, Integer> doc = new HashMap<String, Integer>();
@@ -252,7 +318,7 @@ public class QProber {
 			if (!f.exists()) {
 				System.out.println(array[i] + " is NOT cached!");
 			} else {
-				System.out.println("Getting page: " + array[i]);
+				System.out.println("Getting pages for " + array[i]);
 				int k = 4;
 				try {
 					FileReader reader = new FileReader(f);
@@ -269,6 +335,13 @@ public class QProber {
 							if (temp != null && temp.size() != 0) {
 								ht.put(s1, "");
 								k--;
+								for (String word : temp) {
+									if (doc.containsKey(word)) {
+										doc.put(word, doc.get(word) + 1);
+									} else {
+										doc.put(word, 1);
+									}
+								}
 							}
 						}
 					}
@@ -278,21 +351,19 @@ public class QProber {
 					e.printStackTrace();
 				}
 			}
-			if (temp != null && temp.size() != 0) {
-				for (String word : temp) {
-					if (doc.containsKey(word)) {
-						doc.put(word, doc.get(word) + 1);
-					} else {
-						doc.put(word, 1);
-					}
-				}
-			}
 		System.out.println();
 		}
 		removeDuplicat = true;
 		return doc;
 	}
 	
+	/**
+	 * 
+	 * @param host
+	 * @param cat
+	 * @param map
+	 * to output the sample file
+	 */
 	public static void outputResult(String host, Category cat,
 			HashMap<String, Integer> map) {
 		String name = cat.getName() + "-" + host + ".txt";
@@ -314,6 +385,13 @@ public class QProber {
 		}
 	}
 	
+	/**
+	 * 
+	 * @param a
+	 * @param b
+	 * @return merged string array
+	 * to merge the two array to a new array
+	 */
 	public static String[] mergeArrays(String[]a, String[]b){
 		int lengthA = a.length;
 		int lengthB = b.length;
@@ -323,21 +401,26 @@ public class QProber {
 		return result;
 	}
 	
+	/**
+	 * 
+	 * @param host
+	 * @param node
+	 * to analyze the category and call related method to generate the sample file
+	 */
 	public static void docSampling(String host, ArrayList<Category> node) {
 		Category c = node.get(0);
 		if(c.getisLeaf()){
 			c = c.getParent(); //if c is leaf node, we donot need to sample it
 		}
+		HashMap<String, Integer> subMap = null;
 		if(c.getParent()!=null){//meaning it's not root node
 			System.out.println("Sampling "+c);
 			ArrayList<Category> list = c.getSubcat();
 			String[] childArray1 = list.get(0).getQueries();
 			String[] childArray2 = list.get(1).getQueries();
 			String[] tmpArray = mergeArrays(childArray1, childArray2);
-			String[] selfArray = c.getQueries();
-			String[] finalSamplingArray = mergeArrays(tmpArray,selfArray);
-			HashMap<String, Integer> parentMap = samplingCategory(host, finalSamplingArray);
-			outputResult(host,c,parentMap);
+			subMap = samplingCategory(host, tmpArray);
+			outputResult(host,c,subMap);
 		}
 		//it's root node
 		System.out.println("Sampling Root");
@@ -348,6 +431,19 @@ public class QProber {
 		String[] tmpArray = mergeArrays(childArray1, childArray2);
 		String[] finalSamplingArray = mergeArrays(tmpArray, childArray3);
 		HashMap<String, Integer> parentMap = samplingCategory(host, finalSamplingArray);
+		if(subMap!=null){//meaning that we need to merge its child category
+			//System.out.println("Merging..."+parentMap.size()+" "+subMap.size());
+			Iterator<String> i = subMap.keySet().iterator();
+			while(i.hasNext()){
+				String key = i.next();
+				if(parentMap.containsKey(key)){
+					parentMap.put(key, parentMap.get(key)+subMap.get(key));
+				}else{
+					parentMap.put(key, subMap.get(key));
+				}
+			}
+			//System.out.println("Merging result "+parentMap.size());
+		}
 		outputResult(host,rootcat,parentMap);
 	}
 	
@@ -366,7 +462,6 @@ public class QProber {
 		System.out.println("Classifying...");
 		ArrayList<Category> result = Classify(rootcat, host, t_es, t_ec, 1.0);
 		Category cat = result.get(0);
-		System.out.println("!!!cat is "+cat);
 		System.out.println("************************************");
 		System.out.print("The Category:");
 		StringBuffer sb = new StringBuffer();
