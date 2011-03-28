@@ -34,7 +34,7 @@ import org.xml.sax.SAXException;
 
 public class QProber {
 	private static String yahooID = "B8JQDzTV34FHmHMnQcwcEPiucXt.SFviHkJ6w.KxXhr37KFMJtaoV6D79K8Qlw--";
-	private static double coverageCache;
+	private static int coverageCache;
 	private static File rootDir;
 	private static File urlsDir;
 	private static File hostDir;
@@ -195,7 +195,6 @@ public class QProber {
 		for (int i = 0; i < list.getLength(); i++) {
 			Element nameElement = (Element) list.item(i);
 			String theURL = nameElement.getFirstChild().getNodeValue().trim();
-			//System.out.println("URL: " + theURL);
 			sb.append(theURL+"\n");
 		}
 		File queryFile = new File(hostDir, query);
@@ -217,9 +216,7 @@ public class QProber {
 		try {
 			for (String query : cate.getQueries()) {
 				String searchURL = formURL(host,query);
-				//System.out.println(searchURL);
 				String xmlresult = search(searchURL);
-				//System.out.println(xmlResult);
 				if(!xmlresult.equals("NA") ){
 					cacheUrls(xmlresult,query,host);
 					cov += getCoverage(xmlresult);
